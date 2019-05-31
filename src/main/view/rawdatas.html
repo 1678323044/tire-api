@@ -1,0 +1,126 @@
+{{define "rawdatas"}}
+	{{template "header"}}
+		<div class="page_main">
+			<!--面包导航-->
+			<ol class="breadcrumb">
+			  <li><a href="#">现在位置</a></li>
+			  <li class="active">设备管理</li>
+			<li class="active">设备日志</li>
+			</ol>
+			<div id="add-btn" style="margin: 0 0 20px 0">
+			  <form>
+				  	<input id="imei" type="text" name="imei" placeholder="请输入设备ID">
+				    <select id="dt" class="dataType" name="dt">
+				    	<option value="">请选择数据类型</option>
+			    		<option value="0900">0900</option>
+						<option value="0200">0200</option>
+				    </select>
+					<input id="firstDate" type="text" name="date1" class="demo-input" placeholder="请选择日期">
+					<input id="lastDate" type="text" name="date2" class="demo-input" placeholder="请选择日期">
+				    <button type="button"><a href="javascript:showpage()">查询</a></button>
+			  </form>
+			</div>
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="panel panel-default">
+						<div class="panel-heading">设备列表</div>
+						<div class="panel-body">
+							<table class="table table-striped table-hover table-bordered">
+								<thead>
+									<tr>
+										<th>设备号</th>
+										<th>数据类别</th>
+										<th>时间</th>
+										<th>数据</th>
+										<th>数据状态</th>
+									</tr>
+								</thead>
+								 <tbody id="rawdatas">                      
+								</tbody>
+							</table>
+							<div class="page">
+								<ul>
+									<li><a href="javascript:showpage(1)">首页</a></li>
+									<li><a id="prvepage" href="javascript:">上一页</a></li>
+									<li><a id="nextpage" href="javascript:">下一页</a></li>
+									<li><a id="endpage" href="javascript:">尾页</a></li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+<!-- <script src="/static/laydate/laydate.js"></script> -->
+<script>
+	/*lay('#version').html('-v'+ laydate.v);
+	//执行一个laydate实例
+	laydate.render({
+	  elem: '#firstDate' 
+	});
+	laydate.render({
+	  elem: '#lastDate' 
+	});*/
+
+	function showpage(page){
+		$.ajax({
+			url: '/handlerawdatas',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				pageIndex: page,
+				imei: $("#imei").val(),
+				dt: $("#dt").val(),
+				firstDate: $("#firstDate").val(),
+				lastDate: $("#lastDate").val(),
+			},
+			success: function(data){
+				if(data.pageIndex == 1){
+					var prve = 1;
+				}else{
+					var prve = data.pageIndex - 1;
+				}
+				if(data.pageIndex == data.pagecount){
+					var next = data.pagecount;
+				}else{
+					var next = data.pageIndex + 1;
+				}
+				var end = data.pagecount;
+				$("#prvepage").attr('href', 'javascript:showpage('+prve+')');
+				$("#nextpage").attr('href', 'javascript:showpage('+next+')');
+				$("#endpage").attr('href', 'javascript:showpage('+end+')');
+
+				if(data.count == 0) {
+					var empty = '<tr><td>--</td><td></td><td></td><td></td><td></td></tr>'
+					$("#rawdatas").html(empty);
+					return
+				}
+				var html = '';
+				var rawdatas = data.rawdatas;
+				for(var i = 0;i < rawdatas.length;i ++){
+					html += '<tr>';
+						html += '<td>'+rawdatas[i].imei+'</td>';
+						html += '<td>'+rawdatas[i].dt+'</td>';
+						html += '<td>'+rawdatas[i].t+'</td>';
+						html += '<td>'+rawdatas[i].rawdata+'</td>';
+						html += '<td>'+rawdatas[i].stat+'</td>';
+					html += '</tr>';
+				}
+				$("#rawdatas").html(html);
+			},
+			error: function(XMLHttpRequest,textStatus,errorThrown){
+				console.log(XMLHttpRequest);
+				console.log(textStatus);
+				console.log(errorThrown);
+			},
+			complete: function(){
+				console.log("请求完成");
+			}
+		})
+	}
+	showpage(1);
+</script>
+{{end}}

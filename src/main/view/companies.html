@@ -1,0 +1,71 @@
+{{define "companies"}}
+	{{template "header"}}
+		<div class="page_main">
+			<!--面包导航-->
+			<ol class="breadcrumb">
+			  <li>现在位置</li>
+			  <li class="active">公司管理</li>
+			</ol>
+			<div class="row">
+				<div id="add-btn">
+			  		<a href="/addcompanies"><button type="button" id="HB-addRece" class="btn btn-default col-md-12">添加公司</button></a>
+				</div>
+			</div>
+			<div class="row" id="HB-con">
+			</div>
+		</div>
+	</body>
+</html>
+<script src="js/jquery-1.11.1.min.js"></script>
+<script type="text/javascript">
+	function del(){
+		if(!confirm("确认是否删除？")){
+			window.event.returnValue = false;
+		}
+	}
+</script>
+<script>	
+	$(function(){
+		$.ajax({
+			url: '/returncompaniesdata',
+			dataType: 'json',
+			success: function(data){
+				for(var i = 0; i < data.length; i++) {
+					var html = '';
+					html += '<div class="col-md-6">';
+						html += '<div class="panel panel-default">';
+							html += '<div class="panel-heading"><a href="/teams?cid='+data[i].cid+'">'+data[i].name+'</a></div>';
+							html += '<div class="panel-body">';
+								html += '<table class="table table-striped table-hover table-bordered">'
+									html += '<thead>';
+										html += '<tr>';
+											html += '<th>序号</th>';
+											html += '<th>车队个数</th>';
+											html += '<th>司机个数</th>';
+											html += '<th>车辆个数</th>';
+											html += '<th>操作</th>';
+										html += '</tr>';
+									html += '</thead>';
+									html += '<thbody>';
+										html += '<tr>';
+											html += '<td>'+data[i].cid+'</td>';
+											html += '<td>2</td>';
+											html += '<td>10</td>';
+											html += '<td>12</td>';
+											html += '<td><a style="margin: 0 8px 0 0;" href="/editcompanies?cid='+data[i].cid+'">编辑</a><a onclick="return del()" href="/delcompanies?cid='+data[i].cid+'">删除</a></td>';
+										html += '</tr>';
+									html += '</thbody>';
+								html += '</table>';
+							html += '</div>';
+						html += '</div>'; 
+					html += '</div>';
+				};
+				$("#HB-con").html(html);
+			},
+			complete: function(){
+				console.log('请求完成');
+			}
+		});
+	})
+</script>
+{{end}}

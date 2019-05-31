@@ -1,0 +1,140 @@
+{{define "editcompanies"}}
+	{{template "header"}}
+		<div class="page_main">
+			<!--面包导航-->
+			<ol class="breadcrumb">
+			  <li><a href="#">目前位置</a></li>
+			  <li><a href="/user">用户管理</a></li>
+			  <li class="active">编辑公司</li>
+			</ol>
+		</div>
+		<!-- 添加框 -->
+		<div class="HB-addForm">
+			<h4>编辑公司</h4>
+			<form>
+			<table>
+				<tr>
+					<td>
+						<span>公司名称</span>
+						<input id="name" type="text" placeholder="请输入公司名称" required="required">
+					</td>	 
+					<td>
+						<span>联系方式</span>
+						<input id="phone" type="number" placeholder="请输入联系方式">
+					</td>	
+				</tr>
+				<tr>
+					<td>
+						<span>公司邮箱</span>
+						<input id="email" type="email" placeholder="请输入公司邮箱">
+					</td>	 
+					<td>
+						<span>管理人</span>
+						<input id="manager" type="text" placeholder="请输入管理人称呼">
+					</td>	
+				</tr>
+			</table>
+			<div class="HB-btn">
+				<button type="button" id="sure" onclick="return check()" class="btn btn-primary">确定</button>	
+				<a href="/companies"><button type="button" id="HB-off" class="btn btn-primary">取消</button></a>
+			</div>
+		</form>
+		</div>
+	</body>
+</html>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+<script>
+	/* 表单验证 */
+	function check(){
+		var name = $("#name").val();
+		var trimName = $.trim(name);
+		if(trimName == "") {
+			alert("请填写公司名称")
+			$("#name").focus();
+			return false;
+		}
+
+		var phone= $("#phone").val();
+		var trimPhone = $.trim(phone);
+		if(trimPhone == ""){
+			alert("请填写手机号")
+			$("#phone").focus();
+			return false;
+		}
+
+		var email = $("#email").val();
+		var trimEmail = $.trim(email);
+		if(trimEmail == ""){
+			alert("请填写邮箱地址");
+			$("#email").focus();
+			return false;
+		}
+
+		var manager = $("#manager").val();
+		var trimManager = $.trim(manager);
+		if(trimManager == ""){
+			alert("请填写车队长");
+			$("#manager").focus();
+			return false;
+		}
+	}
+
+	/* 获取URL参数 */
+	function getUrlParam(name){
+		var reg = new RegExp("(^|&)"+name+"=([^&]*)(&|$)");
+		var r = window.location.search.substr(1).match(reg);
+		if(r != null){
+			return unescape(r[2]);
+		}else{
+			return null;
+		}
+	}
+	var Scid = getUrlParam('cid');
+	
+	/* 响应服务器数据 */
+	$(function(){
+		$.ajax({
+			url: '/returneditcompanies',
+			type: 'GET',
+			dataType: 'json',
+			data: {
+				cid: Scid,
+			},
+			success: function(data){
+				$('#name').val(data.name);
+				$('#email').val(data.email);
+				$('#manager').val(data.manager);
+				$('#phone').val(data.phone);
+			}
+		})
+	})
+
+	/* 点击编辑 */
+	$("#sure").click(function(){
+		$.ajax({
+			type: 'post',
+			url: '/handleeditcompanies',
+			data: {
+				cid: Scid,
+				name: $('#name').val(),
+				email: $('#email').val(),
+				manager: $('#manager').val(),
+				phone: $('#phone').val(),
+			},
+			success: function(data){
+				if(data.statuscode == 0){
+					$(location).attr('href','/companies');
+				}
+			},
+			error: function(XMLHttpRequest,textStatus,errorThrown){
+				console.log(XMLHttpRequest);
+				console.log(textStatus);
+				console.log(errorThrown);
+			},
+			complete: function(){
+				console.log('请求完成');
+			}
+		})
+	})
+</script>
+{{end}}

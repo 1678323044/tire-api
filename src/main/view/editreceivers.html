@@ -1,0 +1,175 @@
+{{define "editreceivers"}}
+	{{template "header"}}
+		<div class="page_main">
+			<!--面包导航-->
+			<ol class="breadcrumb">
+			  <li><a href="#">首页</a></li>
+			  <li><a href="/receivers">设备列表</a></li>
+			  <li class="active">编辑设备</li>
+			</ol>
+		</div>
+		<!-- 提交框 -->
+		<div class="HB-addForm">
+			<h4>编辑设备</h4>
+			<form>
+			<table>
+				<tr>
+					<td>
+						<span>公司名称</span>
+						<select id="cid" name="cid">
+						</select>
+					</td>
+					<td>
+						<span>设备类别</span>
+						<select id="type" name="type">
+							<option id="car" value="1">小车</option>
+							<option id="cart" value="2">大车</option>
+							<option id="trailer" value="3">挂车</option>
+							<option id="headstock" value="4">车头</option>
+						</select>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<span>物联卡ID</span>
+						<input id="cnum" type="text" name="cnum" placeholder="请输入物联卡ID">
+					</td>	 
+				</tr>
+				<tr>
+					<td colspan="2">
+						<span>设备ID</span>
+						<textarea id="rids" name="rids" required="required"></textarea>
+					</td>	
+				</tr>
+			</table>
+			<div class="HB-btn">
+				<button type="button" id="sure" onclick="return check()" class="btn btn-primary">确定</button>	
+				<a href="/receivers"><button type="button" id="HB-off" class="btn btn-primary">取消</button></a>
+			</div>
+		</form>
+		</div>
+	</body>
+</html>
+<script src="https://cdn.jsdelivr.net/npm/jquery@1.12.4/dist/jquery.min.js"></script>
+<script>
+	/* 验证表单 */
+	function check() {
+		var type = $("#type").val();
+		var trimType = $.trim(type);
+		if(trimType == ""){
+			alert("请选择车辆类型");
+			$("#type").focus();
+			return false;
+		}
+
+		var cid = $("#cid").val();
+		var trimCid = $.trim(cid);
+		if(trimCid == ""){
+			alert("请选择公司");
+			$("#cid").focus();
+			return false;
+		}
+
+		var cnum = $("#cnum").val();
+		var trimCnum = $.trim(cnum);
+		if(trimCnum == ""){
+			alert("请填写物联卡号！");
+			$("#cnum").focus();
+			return false;
+		}
+
+		var rids = $("#rids").val(); 
+		var trimRids = $.trim(rids);
+		if(rids == ""){
+			alert("请输入设备ID!");
+			$("#rids").focus();
+			return false;
+		}
+	}
+
+	/* 获取URL参数 */
+	function getUrlParam(name){
+		var reg = new RegExp("(^|&)"+name+"=([^&]*)(&|$)");
+		var r = window.location.search.substr(1).match(reg);
+		if(reg != null){
+			return unescape(r[2]);
+		}else{
+			return null;
+		}
+	}
+	var Srid = getUrlParam('rid');
+
+	/* 响应服务器数据 */
+	$(function(){
+		$.ajax({
+			url: '/returneditreceiversdata',
+			type: 'GET',
+			dataType: 'json',
+			data: {
+				rid: Srid,
+			},
+			success: function(data){
+				var receiver = data.receiver
+				$("#cnum").val(receiver.cnum);
+				switch(receiver.type)
+				{
+					case 1:
+						$("#car").attr("selected","selected");
+						break;
+					case 2:
+						$("#cart").attr("selected","selected");
+						break;
+					case 3:
+						$("#trailer").attr("selected","selected");
+						alert("挂车");
+						break;
+					case 4:
+						$("#headstock").attr("selected","selected");
+						alert("车头");
+						break;
+				};
+				var companies = data.companies
+				var name = '';
+				for(var i = 0;i < companies.length;i ++){
+					name += '<option>'+companies[i].name+'</option>';
+				}
+				$("#cid").html(name);
+				$("#rids").val(receiver.rid);
+			},
+			error: function(XMLHttpRequest,textStatus,errorThrown){
+				console.log(XMLHttpRequest);
+				console.log(textStatus);
+				console.log(errorThrown);
+			},
+			complete: function(){
+				console.log("请求完成");
+			}
+		});
+	})
+
+	$("#sure").click(function(){
+		$.ajax({
+			url: '/handleeditreceivers',
+			type: 'POST',
+			dataType: 'json',
+			data: {
+				rid: Srid,
+				cid: $("#cid").val(),
+				rids: $("#rids").val(),
+				cnum: $("#cnum").val(),
+				type: $("#type").val(),
+			},
+			success: function(data){
+				if(data.statuscode == 0){
+					$(location).attr('href', '/receivers');
+				}
+			},
+			error: function(XMLHttpRequest,textStatus,errorThrown){
+				console.log(XMLHttpRequest);
+				console.log(textStatus);
+				console.log(errorThrown);
+			}
+		})
+	});
+</script>
+{{end}}

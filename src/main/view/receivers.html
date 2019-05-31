@@ -1,0 +1,107 @@
+{{define "receivers"}}
+	{{template "header"}}
+		<div class="page_main">
+			<!--面包导航-->
+			<ol class="breadcrumb">
+			  <li><a href="#">现在位置</a></li>
+			  <li class="active">设备管理</li>
+			<li class="active">设备列表</li>
+			</ol>
+			<div id="add-btn">
+			  <button type="button" id="HB-addRece" class="btn btn-default"><a href="/addreceivers">添加设备</a></button>
+			</div>
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="panel panel-default">
+						<div class="panel-heading">设备列表</div>
+						<div class="panel-body">
+							<table class="table table-striped table-hover table-bordered">
+								<thead>
+									<tr>
+										<th>接收器ID</th>
+										<th>型号</th>
+										<th>创建时间</th>
+										<th>激活时间</th>
+										<th>绑定时间</th>
+										<th>物联卡号</th>
+										<th>是否绑定</th>
+										<th>类别</th>
+										<th>最新通讯时间</th>
+										<th>状态</th>
+										<th>操作</th>
+									</tr>
+								</thead>
+								<tbody id="HB-list">
+									
+								</tbody>
+							</table>
+							<div class="page">
+								<ul>
+									<li><a href="javascript:showpage(1)">首页</a></li>
+									<li><a id="prvepage" href="javascript:">上一页</a></li>
+									<li><a id="nextpage" href="javascript:">下一页</a></li>
+									<li><a id="endpage" href="javascript:">尾页</a></li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+<script>
+	function showpage(page){
+		$.ajax({
+			url: '/handlereceivers',
+			type: 'GET',
+			dataType: 'json',
+			data: {
+				pageIndex: page,
+			},
+			success: function(data){
+				if(data.pageIndex == 1){
+					var prve = 1;
+				}else{
+					var prve = data.pageIndex - 1;
+				}
+				var end = data.pageCount;
+    			if(data.pageIndex == data.pageCount){
+    				var next = data.pageCount;
+    			}else{
+    				var next = data.pageIndex + 1;
+    			}
+				$("#prvepage").attr('href', 'javascript:showpage('+prve+')');
+				$("#nextpage").attr('href', 'javascript:showpage('+next+')');
+				$("#endpage").attr('href', 'javascript:showpage('+end+')');
+
+				var html = '';
+				var receivers = data.receivers;
+				for (var i = 0; i < receivers.length; i++) {
+					html += '<tr>';
+						html += '<td>'+receivers[i].rid+'</td>';
+						html += '<td>'+receivers[i].model+'</td>';
+						html += '<td>'+receivers[i].ct+'</td>';
+						html += '<td>'+receivers[i].at+'</td>';
+						html += '<td>'+receivers[i].bt+'</td>';
+						html += '<td>'+receivers[i].cnum+'</td>';
+						html += '<td>'+receivers[i].binded+'</td>';
+						html += '<td>'+receivers[i].type+'</td>';
+						html += '<td>'+receivers[i].lt+'</td>';
+						html += '<td>'+receivers[i].status+'</td>';
+						html += '<td><a href="/laststatuses?rid='+receivers[i].rid+'">查看</a><a style="margin: 0 10px;" href="/editreceivers?rid='+receivers[i].rid+'">编辑</a><a onclick="return del()" href="/delreceivers?rid='+receivers[i].rid+'">删除</a></td>';
+					html += '</tr>';
+				};
+				$("#HB-list").html(html);
+			},
+			error: function(XMLHttpRequest,textStatus,errorThrown){
+				console.log(XMLHttpRequest);
+				console.log(textStatus);
+				console.log(errorThrown);
+			}
+		});
+	};
+	showpage(1)
+</script>
+{{end}}

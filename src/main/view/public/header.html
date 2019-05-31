@@ -1,0 +1,186 @@
+{{define "header"}}
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<title>用户管理-TIRE智能轮胎管理系统</title>
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<link href="https://cdn.bootcdn.net/npm/bootstrap@3.3.7/dist/css/bootstrap.min.css" rel="stylesheet">
+		<style>
+			@media screen and (min-width: 768px) {
+				#slider_sub{
+					width: 250px;
+					margin-top: 51px;
+					position: absolute;
+					z-index: 1;
+					height: 600px;
+				}
+				.page_main{
+					margin-left: 255px;
+				}
+			}
+			#slider_sub li li{
+				text-indent: 20px;
+				line-height: 30px;
+				list-style: none;
+			}
+			#slider_sub li #nav_big{
+				line-height: 34px;
+				font-size: 18px;
+				font-weight: bold;
+			}
+			.jumbotron{
+				position: absolute;
+				left: 50%;
+				top: 20%;
+				margin: 0 0 0 -450px;
+				width: 900px;
+			}
+			.HB-addForm{
+				width: 900px;
+				position: fixed;
+				z-index: 99999;
+				left: 50%;
+				top: 20%;
+				padding: 40px;
+				margin: 0 0 0 -450px;
+				background-color: #FFFFFF;
+				border: solid 1px #cccccc;
+			}
+			.HB-addForm h2{
+				text-align: center;
+				line-height: 50px;
+				color: #ffffff;
+				font-weight: normal;
+				background: rgb(12, 202, 197);
+			}
+			.HB-addForm table{
+				width: 100%;
+				margin-top: 40px;
+			}
+			.HB-addForm table td{
+				width: 50%;
+				padding: 5px 6% 5px 0;
+				box-sizing: border-box;
+			}
+			.HB-addForm table td span{
+				float: left;
+				line-height: 39px;
+			}
+			.HB-addForm table td input,.HB-addForm table td textarea{
+				float: right;
+				border: solid 1px #ccc;
+			}
+			.HB-addForm table td input{
+				padding: 0 55px 0 10px;
+				line-height: 35px;
+				border-radius: 5px;
+			}
+			.HB-addForm table td textarea{
+				resize: none;
+				width: 450px;
+				height: 140px;
+				float: left;
+				margin: 0 0 0 82px;
+			}
+			.HB-addForm table td select{
+				width: 182px;
+				float: right;
+				height: 37px;
+				margin: 0 55px 0 0;
+			}
+			.HB-btn{
+				width: 137px;
+				margin: 40px auto 0;
+			}
+			#HB-addRece{
+				width: 100px;
+				float: right;
+				margin: 0 60px 10px 0;
+			}
+			.dataType{
+				width: 174px;
+				height: 26px;
+			}
+
+			.page{
+				overflow: hidden;
+			}
+			.page ul{
+				overflow: hidden;
+				padding: 0;
+				float: left;
+			}
+			.page ul li{
+				list-style: none;
+				float: left;
+				margin: 0 10px 0 0;
+				border: solid 1px #666666;
+			}
+			.page ul li a{
+				color: #666666;
+				font-size: 12px;
+				display: block;
+				padding: 1px 10px;
+			}
+			.page p{
+				float: left;
+			}
+			#HB-out{
+				margin-right: 15px;
+			}
+			.edit{
+				margin: 0 5px;
+			}
+		</style>
+	</head>
+	<body>
+		<nav class="navbar navbar-default navbar-static-top">
+			<div class="navbar-brand">智能轮胎后台管理系统</div>
+			<ul class="nav navbar-nav navbar-right" id="HB-out">
+				<li><a href="/login"><span class="glyphicon glyphicon-off"></span>&nbsp;退出</a></li>
+			</ul>
+			<!--侧边栏-->
+			<div class="navbar-default panel-heading navbar-collapse" id="slider_sub">
+				<ul class="nav">
+					<li>
+						<a id="nav_big" href="/companies">公司管理<span class="glyphicon glyphicon-chevron-right pull-right"></span></a>
+						<ul class="nav" id="HB-nav">
+						</ul>
+					</li>
+					<li>
+						<a id="nav_big" href="#">设备管理<span class="glyphicon glyphicon-chevron-right pull-right"></span></a>
+						<ul class="nav">
+							<li><a href="/receivers">设备列表</a></li> 
+							<li><a href="/rawdatas">设备日志</a></li>
+						</ul>
+					</li>
+				</ul>
+			</div>
+		</nav>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+<script>
+	$(function(){
+		$.ajax({
+			url: '/sidebar',
+			dataType: 'json',
+			success: function (data) {
+				var html = '';
+				$.each(data,function (k1,v1) {
+					var Scid = String(v1.cid);
+					html += '<li><a href="teams?cid='+Scid+'">'+v1.name+'</a>';
+					$.each(v1.teams,function (k2,v2) {
+						html += "<ul><li>"+v2.name+"</li></ul>";
+					})
+					html += "</li>";
+				})
+				$("#HB-nav").html(html);
+			},error: function(data,textStatus,errorThrown){
+				console.log(data);
+				console.log(textStatus);
+				console.log(errorThrown);
+			}
+		})
+	})
+</script>
+{{end}}

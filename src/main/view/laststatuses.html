@@ -1,0 +1,95 @@
+{{define "laststatuses"}}
+	{{template "header"}}
+		<div class="page_main">
+			<!--面包导航-->
+			<ol class="breadcrumb">
+			  <li><a href="#">现在位置</a></li>
+			  <li class="active">设备管理</li>
+			  <li class="active">设备列表</li>
+			  <li class="active">设备最新状态</li>
+			</ol>
+			<div class="row">
+				<div id="add-btn">
+			  		<a href="/receivers"><button type="button" id="HB-addRece" class="btn btn-default col-md-12">返回</button></a>
+				</div>
+			</div>
+			<div class="row">
+				<div class="col-sm-12">
+					<div class="panel panel-default">
+						<div class="panel-heading"><h5 id="HB-rid" style="margin: 5px 0;"></h5></div>
+						<div class="panel-body">
+							<table class="table table-striped table-hover table-bordered">
+								<thead>
+									<tr>
+										<th>时间</th>
+										<th>传感器ID</th>
+										<th>卡号</th>
+										<th>序列号</th>
+										<th>电压</th>
+										<th>胎压</th>
+										<th>温度</th>
+										<th>操作</th>
+									</tr>
+								</thead>
+								 <tbody id="HB-tbody">                   
+								</tbody>
+							</table>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</body>
+</html>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+<script>
+	/* 获取URL参数 */
+	function getUrlParam(name){
+		var reg = new RegExp("(^|&)"+name+"=([^&]*)(&|$)");
+		var r = window.location.search.substr(1).match(reg);
+		if(r != null){
+			return unescape(r[2]);
+		}else{
+			return null;
+		}
+	}
+	var Srid = getUrlParam('rid');	
+
+	/* 响应服务器数据 */
+	$(function(){
+		$.ajax({
+			url: '/returnlaststatuses',
+			type: 'GET',
+			data: {
+				rid: Srid,
+			},
+			success: function(data){
+				var lps = data.lp;
+				var html = '';
+				for(var i = 0;i < lps.length;i ++){
+					html += '<tr>';
+						html += '<td>'+lps[i].t+'</td>';
+						html += '<td>'+lps[i].sid+'</td>';
+						html += '<td>'+lps[i].cardid+'</td>'
+						html += '<td>'+lps[i].sn+'</td>';
+						html += '<td>'+lps[i].vol+'</td>';
+						html += '<td>'+lps[i].pres+'</td>';
+						html += '<td>'+lps[i].temp+'</td>';
+						html += '<td><a href="dellaststatus?cardid='+lps[i].cardid+'&sn='+lps[i].sn+'&rid='+Srid+'">删除</a></td>';
+					html += '</tr>';
+				};
+				$("#HB-tbody").html(html);
+				$("#HB-rid").html("设备号："+data.rid)
+			},
+			error: function(XMLHttpRequest,textStatus,errorThrown){
+				console.log(XMLHttpRequest);
+				console.log(textStatus);
+				console.log(errorThrown);
+			},
+			complete: function(){
+				console.log("请求完成");
+			}  
+		});
+	})
+</script>  
+{{end}}
