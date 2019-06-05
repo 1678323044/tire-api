@@ -5,8 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"gopkg.in/mgo.v2/bson"
+	"math"
 	"net/http"
+	"os"
 	"strconv"
+	"time"
 )
 
 type HttpListener struct {
@@ -115,9 +118,9 @@ func (p *HttpListener) handleEditCompany (w http.ResponseWriter, r *http.Request
 		cid := r.FormValue("cid")
 		iCid,_ := strconv.Atoi(cid)
 
-		checkResult := p.checkFields(name,phone,email,manager)
+		checkResult := p.checkFields(name)
 		if !checkResult {
-			sErr := p.makeResultStr(1003,"输入框不能为空")
+			sErr := p.makeResultStr(1003,"缺少必要字段")
 			w.Write([]byte(sErr))
 			return
 		}
@@ -143,6 +146,93 @@ func (p *HttpListener) handleEditCompany (w http.ResponseWriter, r *http.Request
 		}
 		w.Write(buf)
 	}
+}
+
+/* 处理原始数据 */
+type RawdataT struct {
+	Id   bson.ObjectId `bson:"_id"`
+	Imei string	 `json:"imei"`
+	Dt   string  `json:"dt"`
+	T    int64
+	TT   string  `json:"t"`
+	Data string  `json:"rawdata"`
+	Stat int     `json:"stat"`
+}
+
+/* 返回的数据 */
+type ReturnRawdata struct {
+	Errcode    int         `json:"errcode"`
+	Count      int         `json:"count"`
+	PageIndex  int	       `json:"pageIndex"`
+	PageCount  int         `json:"pageCount"`
+	Rawdatas   []RawdataT  `json:"rawdatas"`
+	Rawdata    RawdataT	   `json:"rawdata"`
+}
+
+func (p *HttpListener)handleRawDatas(w http.ResponseWriter, r *http.Request)  {
+	if _,ok := p.shareCheck(w,r); ok{
+		//判断是否存在查询条件
+		match := bson.M{}
+		imei := r.FormValue("imei")
+		dt := r.FormValue("dt")
+		pageIndex := r.FormValue("pageIndex")
+		if imei != "" {
+			match["imei"] = imei
+		}
+		if dt != "" {
+			match["dt"] = dt
+		}
+		rawdata := RawdataT{
+			Imei: imei,
+			Dt:   dt,
+		}
+
+		//实现翻页功能
+		count := p.dbInfo.findRawDatasCount(match)
+		pageSize := 4
+		pageCount := int(math.Ceil(float64(count) / float64(pageSize)))
+		var iPageIndex int
+		if pageIndex == "" {
+			iPageIndex = 1
+		}else if iPageIndex,_ = strconv.Atoi(pageIndex);iPageIndex > pageCount {
+			iPageIndex = pageCount
+		}else if iPageIndex,_ = strconv.Atoi(pageIndex);iPageIndex < 1 {
+			iPageIndex = 1
+		} else{
+			iPageIndex,_ = strconv.Atoi(pageIndex)
+		}
+		start := pageSize * (iPageIndex - 1)
+		rawdatas,err := p.dbInfo.findRawDatasMatch(pageSize,start, match)
+		if err != nil {
+			sErr := p.makeResultStr(2000,"查询原始数据错误")
+			w.Write([]byte(sErr))
+			return
+		}
+		for i := 0; i < len(rawdatas); i++ {
+			rawdatas[i].TT = TimeStampToStr(rawdatas[i].T)
+		}
+		returnRawdata := ReturnRawdata{
+			Errcode: 0,
+			Count: count,
+			PageIndex: iPageIndex,
+			PageCount: pageCount,
+			Rawdatas: rawdatas,
+			Rawdata: rawdata,
+		}
+		buf,err := json.Marshal(returnRawdata)
+		if err != nil {
+			fmt.Fprintf(os.Stdout,"响应的rawdata数据 json解析错误")
+			return
+		}
+		w.Write(buf)
+	}
+}
+
+/* 时间戳时间格式化 */
+func TimeStampToStr(t int64) string{
+	ts:= time.Unix(t,0)
+	s := ts.Format("2006-01-02 15:04:05")
+	return s
 }
 
 /* 检查表单提交是否为空 */

@@ -13,4 +13,7 @@ func (p *HttpListener) Router(w http.ResponseWriter, r *http.Request) {
 	if r.URL.Path == "/editCompany" {
 		p.handleEditCompany(w,r)
 	}
+	if r.URL.Path == "/rawdatas"{
+		p.handleRawDatas(w,r)
+	}
 }

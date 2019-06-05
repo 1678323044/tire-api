@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
+	"os"
 )
 
 /* 定义结构体 保存数据库信息 */
@@ -18,6 +19,7 @@ const (
 	CollectionCounters   string = "counters"
 	CollectionCompanies  string = "companies"
 	CollectionCustomers  string = "customers"
+	collectionRawDatas   string = "rawdatas"
 )
 
 func ConnToDB(cfg *Config) (*DBInfo, error) {
@@ -109,3 +111,28 @@ func (p *DBInfo) updateCompany(company *Company) error {
 	return err
 }
 
+/* 查看设备日志 */
+func (p *DBInfo) findRawDatasMatch(pageSize ,start int, match bson.M) ([]RawdataT,error) {
+	s := p.session.Copy()
+	defer s.Close()
+	c := s.DB(p.dbName).C(collectionRawDatas)
+	var rawdatas []RawdataT
+	err	:= c.Find(match).Select(bson.M{"_id":0,"rdata":0}).Sort("-_id").Skip(start).Limit(pageSize).All(&rawdatas)
+	if err != nil{
+		fmt.Fprintf(os.Stdout,"查询设备日志数据 失败,%v\n",err)
+		return nil,err
+	}
+	return rawdatas,err
+}
+
+func (p *DBInfo) findRawDatasCount(match bson.M) int{
+	s := p.session.Copy()
+	defer s.Close()
+	c := s.DB(p.dbName).C(collectionRawDatas)
+	count,err := c.Find(match).Count()
+	if err != nil {
+		fmt.Printf("查询原始数据总记录数失败,err:%v\n",err)
+		return 0
+	}
+	return count
+}
