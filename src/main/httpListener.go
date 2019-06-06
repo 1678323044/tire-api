@@ -169,6 +169,7 @@ type ReturnRawdata struct {
 	Rawdata    RawdataT	   `json:"rawdata"`
 }
 
+/* 处理原始数据 */
 func (p *HttpListener)handleRawDatas(w http.ResponseWriter, r *http.Request)  {
 	if _,ok := p.shareCheck(w,r); ok{
 		//判断是否存在查询条件
