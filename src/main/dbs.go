@@ -2,10 +2,8 @@
 package main
 
 import (
-	"fmt"
 	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"os"
 )
 
 /* 定义结构体 保存数据库信息 */
@@ -44,8 +42,8 @@ func (p *DBInfo) checkAccessToken(userid,accesstoken string) bool {
 	s := p.session.Copy()
 	defer s.Close()
 	c := s.DB(p.dbName).C(CollectionCustomers)
-	//useridObId := bson.ObjectIdHex(userid)
-	count,err := c.Find(bson.M{"id": userid,"accesstoken": accesstoken}).Count()
+	useridObId := bson.ObjectIdHex(userid)
+	count,err := c.Find(bson.M{"id": useridObId,"accesstoken": accesstoken}).Count()
 	if count == 0 || err != nil {
 		return false
 	}
@@ -78,7 +76,7 @@ func (p *DBInfo) findCompanies() ([]Company, error) {
 	var companies []Company
 	err := c.Find(nil).All(&companies)
 	if err != nil {
-		fmt.Printf("查询公司信息错误,err:%v\n",err)
+		debugLog.Printf("查询公司信息错误,err:%v\n",err)
 		return nil, err
 	}
 	return companies, err
@@ -91,7 +89,7 @@ func (p *DBInfo) insertCompany(company *Company) error {
 	c := s.DB(p.dbName).C(CollectionCompanies)
 	err := c.Insert(company)
 	if err != nil {
-		fmt.Printf("添加公司失败,err:%v\n",err)
+		debugLog.Printf("添加公司失败,err:%v\n",err)
 		return err
 	}
 	return err
@@ -105,7 +103,20 @@ func (p *DBInfo) updateCompany(company *Company) error {
 	err := c.Update(bson.M{"cid": company.Cid},bson.M{"$set":
 		bson.M{"name": company.Name,"phone": company.Phone,"emial": company.Email,"manager": company.Manager}})
 	if err != nil {
-		fmt.Printf("编辑公司失败,err:%v\n",err)
+		debugLog.Printf("编辑公司失败,err:%v\n",err)
+		return err
+	}
+	return err
+}
+
+/* 删除公司 */
+func (p *DBInfo) delCompany(iCid int) error {
+	s := p.session.Copy()
+	defer s.Close()
+	c := s.DB(p.dbName).C(CollectionCompanies)
+	err := c.Remove(bson.M{"cid": iCid})
+	if err != nil {
+		debugLog.Printf("删除公司失败,err:%v\n",err)
 		return err
 	}
 	return err
@@ -119,7 +130,7 @@ func (p *DBInfo) findRawDatasMatch(pageSize ,start int, match bson.M) ([]Rawdata
 	var rawdatas []RawdataT
 	err	:= c.Find(match).Select(bson.M{"_id":0,"rdata":0}).Sort("-_id").Skip(start).Limit(pageSize).All(&rawdatas)
 	if err != nil{
-		fmt.Fprintf(os.Stdout,"查询设备日志数据 失败,%v\n",err)
+		debugLog.Printf("查询设备日志数据 失败,%v\n",err)
 		return nil,err
 	}
 	return rawdatas,err
@@ -131,7 +142,7 @@ func (p *DBInfo) findRawDatasCount(match bson.M) int{
 	c := s.DB(p.dbName).C(collectionRawDatas)
 	count,err := c.Find(match).Count()
 	if err != nil {
-		fmt.Printf("查询原始数据总记录数失败,err:%v\n",err)
+		debugLog.Printf("查询原始数据总记录数失败,err:%v\n",err)
 		return 0
 	}
 	return count

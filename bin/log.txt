@@ -1,0 +1,2 @@
+[Info]D:/GithubWork/tire-api/src/main/debugLog.go:17: 测试打印
+[Info]D:/GithubWork/tire-api/src/main/main.go:12: 测试打印

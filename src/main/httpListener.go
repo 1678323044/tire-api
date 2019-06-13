@@ -7,9 +7,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"math"
 	"net/http"
-	"os"
 	"strconv"
-	"time"
 )
 
 type HttpListener struct {
@@ -62,7 +60,7 @@ func (p *HttpListener)handleCompanies(w http.ResponseWriter, r *http.Request) {
 		}
 		buf,err01 := json.Marshal(returnCompanies)
 		if err01 != nil {
-			fmt.Printf("公司列表的json解析错误,err:%v\n",err01)
+			debugLog.Printf("公司列表的json解析错误,err:%v\n",err01)
 			return
 		}
 		w.Write(buf)
@@ -101,7 +99,7 @@ func (p *HttpListener) handleAddCompany(w http.ResponseWriter, r *http.Request) 
 		returnCompanies.Errcode = 0
 		buf, err02 := json.Marshal(returnCompanies)
 		if err02 != nil {
-			fmt.Printf("添加公司解析json失败,err:%v\n",err02)
+			debugLog.Printf("添加公司解析json失败,err:%v\n",err02)
 			return
 		}
 		w.Write(buf)
@@ -118,7 +116,7 @@ func (p *HttpListener) handleEditCompany (w http.ResponseWriter, r *http.Request
 		cid := r.FormValue("cid")
 		iCid,_ := strconv.Atoi(cid)
 
-		checkResult := p.checkFields(name)
+		checkResult := p.checkFields(name,cid)
 		if !checkResult {
 			sErr := p.makeResultStr(1003,"缺少必要字段")
 			w.Write([]byte(sErr))
@@ -141,9 +139,35 @@ func (p *HttpListener) handleEditCompany (w http.ResponseWriter, r *http.Request
 		returnCompanies.Errcode = 0
 		buf,err01 := json.Marshal(returnCompanies)
 		if err01 != nil {
-			fmt.Printf("编辑公司json解析失败,err:%v\n",err01)
+			debugLog.Printf("编辑公司json解析失败,err:%v\n",err01)
 			return
 		}
+		w.Write(buf)
+	}
+}
+
+/* 处理公司删除功能 */
+func (p *HttpListener) handleDelCompanies(w http.ResponseWriter, r *http.Request) {
+	if _,ok := p.shareCheck(w, r);ok {
+		cid := r.FormValue("cid")
+		iCid, _ := strconv.Atoi(cid)
+
+		checkResult := p.checkFields(cid)
+		if !checkResult {
+			sErr := p.makeResultStr(1003,"缺少必要字段")
+			w.Write([]byte(sErr))
+			return
+		}
+
+		err := p.dbInfo.delCompany(iCid)
+		if err != nil {
+			sErr := p.makeResultStr(1101,"删除公司失败")
+			w.Write([]byte(sErr))
+			return
+		}
+		var returnCompanies ReturnCompanies
+		returnCompanies.Errcode = 0
+		buf,_ := json.Marshal(returnCompanies)
 		w.Write(buf)
 	}
 }
@@ -210,7 +234,7 @@ func (p *HttpListener)handleRawDatas(w http.ResponseWriter, r *http.Request)  {
 			return
 		}
 		for i := 0; i < len(rawdatas); i++ {
-			rawdatas[i].TT = TimeStampToStr(rawdatas[i].T)
+			rawdatas[i].TT = timeStampToStr(rawdatas[i].T)
 		}
 		returnRawdata := ReturnRawdata{
 			Errcode: 0,
@@ -222,61 +246,9 @@ func (p *HttpListener)handleRawDatas(w http.ResponseWriter, r *http.Request)  {
 		}
 		buf,err := json.Marshal(returnRawdata)
 		if err != nil {
-			fmt.Fprintf(os.Stdout,"响应的rawdata数据 json解析错误")
+			debugLog.Printf("响应的rawdata数据 json解析错误")
 			return
 		}
 		w.Write(buf)
-	}
-}
-
-/* 时间戳时间格式化 */
-func TimeStampToStr(t int64) string{
-	ts:= time.Unix(t,0)
-	s := ts.Format("2006-01-02 15:04:05")
-	return s
-}
-
-/* 检查表单提交是否为空 */
-func (p *HttpListener)checkFields(fields ...string) bool {
-	for _,val := range fields{
-		if val == ""{
-			return false
-		}
-	}
-	return true
-}
-
-/* 检查访问是否携带令牌 */
-func (p *HttpListener) shareCheck(w http.ResponseWriter, r *http.Request) (userid string,result bool) {
-	//访问控制允许全部来源 允许跨域
-	w.Header().Set("Access-Control-Allow-Origin","*")
-
-	query := r.URL.Query()
-	userid = query.Get("userid")
-	token := query.Get("accesstoken")
-	//检查是否缺少字段
-	if userid == "" || token == "" {
-		s := p.makeResultStr(1003,"缺少必要字段")
-		w.Write([]byte(s))
-		result = false
-		return
-	}
-	//检查用户令牌是否存在 IsObjectIdHex() 检查是否为objectHex格式的字符串
-	if !bson.IsObjectIdHex(userid) || !p.dbInfo.checkAccessToken(userid,token){
-		s := p.makeResultStr(1006,"非法访问")
-		w.Write([]byte(s))
-		result = false
-		return
-	}
-	result = true
-	return
-}
-
-/* 返回处理结果 字符串类型 */
-func (p *HttpListener) makeResultStr(code int,msg string) string {
-	if code == 0{
-		return fmt.Sprintf(`{"errcode": 0, %s}`, msg)
-	}else {
-		return fmt.Sprintf(`{"errcode": %d,"msg": "%s"}`,code,msg)
 	}
 }

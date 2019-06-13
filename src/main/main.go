@@ -5,6 +5,10 @@ import (
 )
 
 func main() {
+	/* 启动日志服务 */
+	newLog()
+	//defer logFile.Close()
+
 	/* 获取系统配置信息 */
 	cfg, err := loadConfig("")
 	if err != nil {
